@@ -16,4 +16,6 @@ public interface BearRepository extends JpaRepository<Bear, Long> {
     @Query(value = "select * from bears where age = :age", nativeQuery = true)
     List<Bear> findByAge(int age);
 
+    List<Bear> findByBearNameContaining(String name);
+
 }
