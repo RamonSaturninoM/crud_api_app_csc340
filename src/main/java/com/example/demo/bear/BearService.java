@@ -33,5 +33,8 @@ public class BearService {
     public List<Bear> getBearsIfNameContains(String name) {
         return bearRepository.findByBearNameContaining(name);
     }
+    public List<Bear> getBearsByName(String name) {
+        return bearRepository.findByBearName(name);
+    }
 
 }

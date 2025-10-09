@@ -38,5 +38,13 @@ public class BearController {
     public void deleteBear(@PathVariable Long bearId) {
         bearService.deleteBear(bearId);
     }
+    @GetMapping("/bears/habitat/{habitat}")
+    public List<Bear> getBearsByHabitat(@PathVariable String habitat) {
+        return bearService.getBearsByHabitat(habitat);
+    }
+    @GetMapping("/bears/search/{name}")
+    public List<Bear> getBearsByName(@PathVariable String name) {
+        return bearService.getBearsByName(name);
+    }
     
 }
