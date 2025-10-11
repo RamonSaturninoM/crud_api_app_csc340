@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 @RestController
 public class BearController {
@@ -26,11 +27,11 @@ public class BearController {
         return bearService.getBearById(bearId);
     }
     @PostMapping("/bears")
-    public Bear addBear(@RequestBody Bear bear) {
+    public Object addBear(@Valid @RequestBody Bear bear) {
         return bearService.addBear(bear);
     }
     @PutMapping("/bears/{bearId}")
-    public Bear updateBear(@PathVariable Long bearId, @RequestBody Bear bear) {
+    public Bear updateBear(@PathVariable Long bearId, @Valid @RequestBody Bear bear) {
         return bearService.updateBear(bearId, bear);
     }
     @DeleteMapping("/bears/{bearId}")

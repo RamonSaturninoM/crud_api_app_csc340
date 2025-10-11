@@ -6,6 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 
 @Entity
 @Table(name = "bears")
@@ -15,15 +18,19 @@ public class Bear {
     private Long bearId;
 
     @Column(nullable = false)
+    @NotBlank(message = "Bear name is required")
     private String bearName;
 
     @Column(nullable = false)
+    @NotBlank(message = "Bear description is required")
     private String bearDescription;
 
     @Column(name = "age")
+    @Min(value = 0, message = "Age must be non-negative")
     private int age;
     
     @Column(name = "habitat")
+    @NotBlank(message = "Habitat is required")
     private String habitat;
     
 
