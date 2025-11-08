@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Min;
 
 @Entity
@@ -33,6 +32,14 @@ public class Bear {
     @NotBlank(message = "Habitat is required")
     private String habitat;
     
+    @Column(name = "species")
+    private String species;
+    
+    @Column(name = "type")
+    private String type;
+    
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
 
     public Bear() {       
     }        
@@ -50,6 +57,17 @@ public class Bear {
         this.bearDescription = bearDescription;
         this.age = age;
         this.habitat = habitat;
+    }
+    
+    public Bear(Long bearId, String bearName, String bearDescription, int age, String habitat, String species, String type, String imageUrl) {
+        this.bearId = bearId;
+        this.bearName = bearName;
+        this.bearDescription = bearDescription;
+        this.age = age;
+        this.habitat = habitat;
+        this.species = species;
+        this.type = type;
+        this.imageUrl = imageUrl;
     }
 
     public Long getBearId() {
@@ -90,5 +108,29 @@ public class Bear {
 
     public void setHabitat(String habitat) {
         this.habitat = habitat;
+    }
+    
+    public String getSpecies() {
+        return species;
+    }
+    
+    public void setSpecies(String species) {
+        this.species = species;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
+    }
+    
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }

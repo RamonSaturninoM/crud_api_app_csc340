@@ -32,8 +32,8 @@
                 <div class="col-lg-8 col-xl-6">
                     <div class="card shadow-lg border-0">
                         <div class="card-header bg-primary text-white text-center py-4">
-                            <h1 class="display-6 fw-bold mb-0">🦁 Add a New Animal</h1>
-                            <p class="mb-0 mt-2 opacity-75">Share your favorite animal with the world!</p>
+                            <h1 class="display-6 fw-bold mb-0" id="formTitle">🦁 Add a New Animal</h1>
+                            <p class="mb-0 mt-2 opacity-75" id="formSubtitle">Share your favorite animal with the world!</p>
                         </div>
                         <div class="card-body p-4">
                             <form id="animalForm" class="needs-validation" novalidate>
@@ -101,18 +101,18 @@
                                             <a class="btn btn-outline-secondary btn-lg px-4" href="index.html">
                                                 <i class="bi bi-arrow-left me-2"></i>Back to Gallery
                                             </a>
-                                            <button class="btn btn-primary btn-lg px-4" type="submit">
-                                                <i class="bi bi-save me-2"></i>Save Animal
+                                            <button class="btn btn-primary btn-lg px-4" type="submit" id="submitButton">
+                                                <i class="bi bi-save me-2"></i><span id="submitButtonText">Save Animal</span>
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </form>
                             
-                            <div id="formAlert" class="alert alert-success mt-4 d-none" role="alert">
-                                <i class="bi bi-check-circle me-2"></i>
-                                <strong>Success!</strong> Animal successfully added! 
-                                <a href="index.html" class="alert-link">View in gallery</a>
+                            <div id="formAlert" class="alert mt-4 d-none" role="alert">
+                                <i class="bi me-2" id="alertIcon"></i>
+                                <strong id="alertTitle"></strong> <span id="alertMessage"></span>
+                                <a href="index.html" class="alert-link" id="alertLink">View in gallery</a>
                             </div>
                         </div>
                     </div>
@@ -133,47 +133,134 @@
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
         
+        // Get bear ID from URL parameters (for editing)
+        const urlParams = new URLSearchParams(window.location.search);
+        const bearId = urlParams.get('id');
+        let isEditMode = false;
+        
+        // Load animal data if editing
+        async function loadAnimalForEdit() {
+            if (!bearId) return;
+            
+            isEditMode = true;
+            
+            // Update form title
+            document.getElementById('formTitle').textContent = '✏️ Edit Animal';
+            document.getElementById('formSubtitle').textContent = 'Update the animal information';
+            document.getElementById('submitButtonText').textContent = 'Update Animal';
+            
+            try {
+                const animal = await fetchBearById(bearId);
+                
+                if (!animal) {
+                    alert('Animal not found');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                
+                // Populate form fields
+                document.getElementById('name').value = animal.name;
+                document.getElementById('species').value = animal.species;
+                document.getElementById('type').value = animal.type;
+                document.getElementById('age').value = animal.age;
+                document.getElementById('habitat').value = animal.habitat;
+                document.getElementById('description').value = animal.description;
+                document.getElementById('imageUrl').value = animal.imageUrl;
+            } catch (error) {
+                console.error('Error loading animal for edit:', error);
+                alert('Failed to load animal data. Please try again.');
+            }
+        }
+        
         // Form validation and submission
         (function() {
             'use strict';
             const form = document.getElementById('animalForm');
             
-            form.addEventListener('submit', function(event) {
+            form.addEventListener('submit', async function(event) {
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
                 } else {
                     event.preventDefault();
                     
-                    // Get form data
-                    const formData = new FormData(form);
-                    const animal = {
-                        name: formData.get('name'),
-                        species: formData.get('species'),
-                        type: formData.get('type'),
-                        age: parseInt(formData.get('age')),
-                        habitat: formData.get('habitat'),
-                        description: formData.get('description'),
-                        imageUrl: formData.get('imageUrl')
-                    };
+                    // Disable submit button
+                    const submitButton = document.getElementById('submitButton');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
                     
-                    // Save animal (assuming saveAnimal function exists in script.js)
-                    if (typeof saveAnimal === 'function') {
-                        saveAnimal(animal);
+                    try {
+                        // Get form data
+                        const formData = new FormData(form);
+                        const animal = {
+                            name: formData.get('name'),
+                            species: formData.get('species'),
+                            type: formData.get('type'),
+                            age: parseInt(formData.get('age')),
+                            habitat: formData.get('habitat'),
+                            description: formData.get('description'),
+                            imageUrl: formData.get('imageUrl')
+                        };
+                        
+                        let result;
+                        if (isEditMode && bearId) {
+                            // Update existing animal
+                            result = await updateBear(bearId, animal);
+                            showAlert('success', 'Success!', 'Animal successfully updated!', true);
+                        } else {
+                            // Create new animal
+                            result = await createBear(animal);
+                            showAlert('success', 'Success!', 'Animal successfully added!', true);
+                        }
+                        
+                        // Reset form
+                        form.reset();
+                        form.classList.remove('was-validated');
+                        
+                        // Scroll to success message
+                        document.getElementById('formAlert').scrollIntoView({ behavior: 'smooth' });
+                    } catch (error) {
+                        console.error('Error saving animal:', error);
+                        showAlert('danger', 'Error!', 'Failed to save animal. Please try again.', false);
+                    } finally {
+                        // Re-enable submit button
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = `<i class="bi bi-save me-2"></i><span id="submitButtonText">${isEditMode ? 'Update Animal' : 'Save Animal'}</span>`;
                     }
-                    
-                    // Show success message
-                    document.getElementById('formAlert').classList.remove('d-none');
-                    form.reset();
-                    form.classList.remove('was-validated');
-                    
-                    // Scroll to success message
-                    document.getElementById('formAlert').scrollIntoView({ behavior: 'smooth' });
                 }
                 
                 form.classList.add('was-validated');
             });
         })();
+        
+        function showAlert(type, title, message, showLink) {
+            const alert = document.getElementById('formAlert');
+            const alertIcon = document.getElementById('alertIcon');
+            const alertTitle = document.getElementById('alertTitle');
+            const alertMessage = document.getElementById('alertMessage');
+            const alertLink = document.getElementById('alertLink');
+            
+            alert.className = `alert alert-${type} mt-4`;
+            alert.classList.remove('d-none');
+            
+            if (type === 'success') {
+                alertIcon.className = 'bi bi-check-circle me-2';
+            } else {
+                alertIcon.className = 'bi bi-exclamation-triangle me-2';
+            }
+            
+            alertTitle.textContent = title;
+            alertMessage.textContent = message;
+            
+            if (showLink) {
+                alertLink.classList.remove('d-none');
+            } else {
+                alertLink.classList.add('d-none');
+            }
+        }
+        
+        // Load animal data if editing
+        document.addEventListener('DOMContentLoaded', loadAnimalForEdit);
     </script>
 </body>
 </html>

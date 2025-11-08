@@ -1,74 +1,151 @@
-// --- Default animals shown on first load ---
-const DEFAULT_ANIMALS = [
-    {
-    name: "Red Panda",
-    species: "Ailurus fulgens",
-    type: "Mammal",
-    age: 4,
-    habitat: "Temperate forests",
-    description: "Small, tree-dwelling mammal with russet fur and a ringed tail.",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Red_Panda_%2824986761703%29.jpg/1200px-Red_Panda_%2824986761703%29.jpg"
-    },
-    {
-    name: "African Elephant",
-    species: "Loxodonta africana",
-    type: "Mammal",
-    age: 25,
-    habitat: "Savanna",
-    description: "Largest land animal, highly intelligent and social.",
-    imageUrl: "https://i.natgeofe.com/n/16fc1c64-7589-46da-8350-aa3b01da2152/3961779.jpg?wp=1&w=1084.125&h=792.75"
-    },
-    {
-    name: "Bald Eagle",
-    species: "Haliaeetus leucocephalus",
-    type: "Bird",
-    age: 7,
-    habitat: "Near large bodies of water",
-    description: "Iconic raptor with white head and tail feathers.",
-    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Bald_eagle_about_to_fly_in_Alaska_%282016%29.jpg/1200px-Bald_eagle_about_to_fly_in_Alaska_%282016%29.jpg"
-    },
-    {
-    name: "Tiger",
-    species: "Panthera tigris",
-    type: "Mammal",
-    age: 10,
-    habitat: "Forests and grasslands",
-    description: "Powerful striped big cat native to Asia.",
-    imageUrl: "https://cdn1.parksmedia.wdprapps.disney.com/resize/mwImage/1/1600/900/75/dam/wdpro-assets/parks-and-tickets/attractions/animal-kingdom/disney-animals/disney-animals-asian-sumatran-tigers/disney-animals-asian-sumatran-tigers-00.jpg?1658996208764"
-    },
-    {
-    name: "Green Sea Turtle",
-    species: "Chelonia mydas",
-    type: "Reptile",
-    age: 40,
-    habitat: "Tropical and subtropical seas",
-    description: "Large sea turtle known for long migrations.",
-    imageUrl: "https://natureconservancy-h.assetsadobe.com/is/image/content/dam/tnc/nature/en/photos/t/n/tnc_765560001.jpg?crop=0%2C233%2C4000%2C2200&wid=1300&hei=715&scl=3.076923076923077"
+// API base URL
+const API_BASE_URL = 'http://localhost:8080/bears';
+
+// Helper function to convert Bear entity to frontend format
+function bearToAnimal(bear) {
+    return {
+        id: bear.bearId,
+        name: bear.bearName || 'Unknown',
+        species: bear.species || 'Unknown species',
+        type: bear.type || 'Mammal',
+        age: bear.age || 0,
+        habitat: bear.habitat || 'Unknown',
+        description: bear.bearDescription || 'No description available',
+        imageUrl: bear.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'
+    };
+}
+
+// Helper function to convert frontend format to Bear entity
+function animalToBear(animal) {
+    const bear = {
+        bearName: animal.name,
+        bearDescription: animal.description,
+        age: parseInt(animal.age) || 0,
+        habitat: animal.habitat
+    };
+    
+    // Add optional fields if they exist
+    if (animal.species) {
+        bear.species = animal.species;
     }
-    ];
+    if (animal.type) {
+        bear.type = animal.type;
+    }
+    if (animal.imageUrl) {
+        bear.imageUrl = animal.imageUrl;
+    }
     
-    
-    const STORAGE_KEY = 'animals';
-    
-    
-    function getSavedAnimals() {
+    return bear;
+}
+
+// Fetch all bears from API
+async function fetchAllBears() {
     try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-    } catch {
-    return [];
+        const response = await fetch(API_BASE_URL);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const bears = await response.json();
+        return bears.map(bearToAnimal);
+    } catch (error) {
+        console.error('Error fetching bears:', error);
+        return [];
     }
+}
+
+// Fetch a single bear by ID
+async function fetchBearById(bearId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${bearId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const bear = await response.json();
+        return bearToAnimal(bear);
+    } catch (error) {
+        console.error('Error fetching bear:', error);
+        return null;
     }
-    
-    
-    function saveAnimal(animal) {
-    const animals = getSavedAnimals();
-    animals.push(animal);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(animals));
+}
+
+// Create a new bear via POST
+async function createBear(animal) {
+    try {
+        const bear = animalToBear(animal);
+        const response = await fetch(API_BASE_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bear)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const createdBear = await response.json();
+        return bearToAnimal(createdBear);
+    } catch (error) {
+        console.error('Error creating bear:', error);
+        throw error;
     }
-    
-    
-    function renderCards(list) {
+}
+
+// Update a bear via PUT
+async function updateBear(bearId, animal) {
+    try {
+        const bear = animalToBear(animal);
+        const response = await fetch(`${API_BASE_URL}/${bearId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bear)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const updatedBear = await response.json();
+        return bearToAnimal(updatedBear);
+    } catch (error) {
+        console.error('Error updating bear:', error);
+        throw error;
+    }
+}
+
+// Delete a bear via DELETE
+async function deleteBear(bearId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/${bearId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return true;
+    } catch (error) {
+        console.error('Error deleting bear:', error);
+        throw error;
+    }
+}
+
+// Search bears by name
+async function searchBearsByName(name) {
+    try {
+        const encodedName = encodeURIComponent(name);
+        const response = await fetch(`${API_BASE_URL}/search/${encodedName}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const bears = await response.json();
+        return bears.map(bearToAnimal);
+    } catch (error) {
+        console.error('Error searching bears:', error);
+        return [];
+    }
+}
+
+// Render animal cards
+function renderCards(list) {
     const gallery = document.getElementById('gallery');
     const noResults = document.getElementById('noResults');
     if (!gallery) return; // not on index.html
@@ -76,11 +153,15 @@ const DEFAULT_ANIMALS = [
     gallery.innerHTML = '';
     
     if (list.length === 0) {
-        noResults.classList.remove('d-none');
+        if (noResults) {
+            noResults.classList.remove('d-none');
+        }
         return;
     }
     
-    noResults.classList.add('d-none');
+    if (noResults) {
+        noResults.classList.add('d-none');
+    }
     
     list.forEach((a) => {
         const col = document.createElement('div');
@@ -96,7 +177,7 @@ const DEFAULT_ANIMALS = [
         // Enhanced card content with detailed information
         card.innerHTML = `
             <div class="position-relative">
-                <img src="${a.imageUrl}" class="card-img-top" alt="${a.name}" style="height: 250px; object-fit: cover;">
+                <img src="${a.imageUrl}" class="card-img-top" alt="${a.name}" style="height: 250px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
                 <div class="position-absolute top-0 end-0 m-2">
                     <span class="badge bg-primary">${a.type}</span>
                 </div>
@@ -121,9 +202,19 @@ const DEFAULT_ANIMALS = [
                 </div>
             </div>
             <div class="card-footer bg-transparent border-0">
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="viewDetails('${a.name}')">
-                    <i class="bi bi-eye me-1"></i>View Details
-                </button>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="viewDetails(${a.id})">
+                        <i class="bi bi-eye me-1"></i>View Details
+                    </button>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-warning" onclick="editAnimal(${a.id})" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteAnimal(${a.id})" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
         
@@ -133,14 +224,13 @@ const DEFAULT_ANIMALS = [
 }
 
 // Search functionality
-function searchAnimals(query) {
-    const allAnimals = [...DEFAULT_ANIMALS, ...getSavedAnimals()];
-    
+async function searchAnimals(query) {
     if (!query || query.trim() === '') {
-        return allAnimals;
+        return await fetchAllBears();
     }
     
     const searchTerm = query.toLowerCase().trim();
+    const allAnimals = await fetchAllBears();
     
     return allAnimals.filter(animal => {
         return animal.name.toLowerCase().includes(searchTerm) ||
@@ -163,37 +253,66 @@ function updateSearchResults(filteredAnimals, query) {
     }
 }
 
-// View details function (placeholder for now)
-function viewDetails(animalName) {
-    // This could navigate to a details page or show a modal
-    alert(`Details for ${animalName} - This feature can be implemented later!`);
+// View details function - navigates to details page
+function viewDetails(bearId) {
+    window.location.href = `details.html?id=${bearId}`;
+}
+
+// Edit animal function
+function editAnimal(bearId) {
+    window.location.href = `new-animal-form.html?id=${bearId}`;
+}
+
+// Delete animal function
+async function deleteAnimal(bearId) {
+    if (!confirm('Are you sure you want to delete this animal?')) {
+        return;
+    }
+    
+    try {
+        await deleteBear(bearId);
+        // Reload the page to refresh the list
+        const allAnimals = await fetchAllBears();
+        renderCards(allAnimals);
+        updateSearchResults(allAnimals, '');
+        
+        // Show success message
+        alert('Animal deleted successfully!');
+    } catch (error) {
+        alert('Error deleting animal. Please try again.');
+        console.error(error);
+    }
 }
 
 // Initialize the page
-function initializePage() {
+async function initializePage() {
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
     
     if (!searchInput) return; // not on index.html
     
     // Load and display all animals initially
-    const allAnimals = [...DEFAULT_ANIMALS, ...getSavedAnimals()];
+    const allAnimals = await fetchAllBears();
     renderCards(allAnimals);
     updateSearchResults(allAnimals, '');
     
     // Search functionality
+    let searchTimeout;
     searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
         const query = this.value;
-        const filteredAnimals = searchAnimals(query);
-        renderCards(filteredAnimals);
-        updateSearchResults(filteredAnimals, query);
+        searchTimeout = setTimeout(async () => {
+            const filteredAnimals = await searchAnimals(query);
+            renderCards(filteredAnimals);
+            updateSearchResults(filteredAnimals, query);
+        }, 300); // Debounce search
     });
     
     // Clear search functionality
     if (clearSearch) {
-        clearSearch.addEventListener('click', function() {
+        clearSearch.addEventListener('click', async function() {
             searchInput.value = '';
-            const allAnimals = [...DEFAULT_ANIMALS, ...getSavedAnimals()];
+            const allAnimals = await fetchAllBears();
             renderCards(allAnimals);
             updateSearchResults(allAnimals, '');
         });

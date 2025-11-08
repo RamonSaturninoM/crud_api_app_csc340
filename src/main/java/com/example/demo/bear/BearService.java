@@ -22,6 +22,7 @@ public class BearService {
         return bearRepository.save(bear);
     }
     public Bear updateBear(Long bearId, Bear bear) {
+        bear.setBearId(bearId);
         return bearRepository.save(bear);
     }
     public void deleteBear(Long bearId) {
